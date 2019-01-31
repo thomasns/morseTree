@@ -84,17 +84,17 @@ function anyChildren($tree,$index) {
 	return false;
 }
 
-function drawTree($img, $tree, $startX, $startY, $spread, $drop,$line_colour,$clear_colour) {
+function drawTree($img, $tree, $startX, $startY, $spread, $drop,$lineColor,$clearColor,$textColor) {
 
-	drawNode($img,$tree,1,$startX,$startY,1,$spread,$drop,$line_colour,$clear_colour,true);
-	drawNode($img,$tree,2,$startX,$startY,1,$spread,$drop,$line_colour,$clear_colour,false);
-	imagefilledellipse($img,$startX,$startY,50,50,$clear_colour);
-	imageellipse($img,$startX,$startY,50,50,$line_colour);
-	imagefttext($img,10,0,$startX-18,$startY+6,$line_colour,'./LiberationMono-Bold.ttf','Start');
+	drawNode($img,$tree,1,$startX,$startY,1,$spread,$drop,$lineColor,$clearColor,$textColor,true);
+	drawNode($img,$tree,2,$startX,$startY,1,$spread,$drop,$lineColor,$clearColor,$textColor,false);
+	imagefilledellipse($img,$startX,$startY,50,50,$clearColor);
+	imageellipse($img,$startX,$startY,50,50,$lineColor);
+	imagefttext($img,10,0,$startX-18,$startY+6,$textColor,'./LiberationMono-Bold.ttf','Start');
 
 }
 
-function drawNode($img,$tree,$index,$parentX,$parentY,$layer,$spread,$drop,$line_colour,$clear_colour,$left) {
+function drawNode($img,$tree,$index,$parentX,$parentY,$layer,$spread,$drop,$lineColor,$clearColor,$textColor,$left) {
 	if ($index > 126) //ensure we haven't ran past the array
 		return;
 
@@ -110,25 +110,25 @@ function drawNode($img,$tree,$index,$parentX,$parentY,$layer,$spread,$drop,$line
 		$x = $parentX + $spread;
 
 	//recurse first, so we can draw over any lines drawn
-	drawNode($img,$tree,2*$index+1, $x, $parentY+$drop, $layer+1, $spread/2, $drop,$line_colour,$clear_colour, true);
-	drawNode($img,$tree,2*$index+2, $x, $parentY+$drop, $layer+1, $spread/2, $drop, $line_colour,$clear_colour,false);
+	drawNode($img,$tree,2*$index+1, $x, $parentY+$drop, $layer+1, $spread/2, $drop,$lineColor,$clearColor,$textColor, true);
+	drawNode($img,$tree,2*$index+2, $x, $parentY+$drop, $layer+1, $spread/2, $drop, $lineColor,$clearColor,$textColor,false);
 
 	//set font size a little larger for small symbols
 	if($tree[$index] == "." || $tree[$index] == ',') $fontSize = 14; 
 	else $fontSize = 12;
 
 	if ($left) { //spread to the left 
-		imageline($img,$parentX,$parentY,$x,$parentY + $drop,$line_colour);
-		imagefilledellipse($img,$x, $parentY + $drop, 30, 30,$clear_colour);
-		imageellipse($img,$x, $parentY + $drop, 30, 30,$line_colour);
+		imageline($img,$parentX,$parentY,$x,$parentY + $drop,$lineColor);
+		imagefilledellipse($img,$x, $parentY + $drop, 30, 30,$clearColor);
+		imageellipse($img,$x, $parentY + $drop, 30, 30,$lineColor);
 		if ($tree[$index] != -2) //Only print if its a valid symbol
-			imagefttext($img,$fontSize,0, $x-6, $parentY+$drop+6,$line_colour,'./LiberationMono-Bold.ttf',$tree[$index]);
+			imagefttext($img,$fontSize,0, $x-6, $parentY+$drop+6,$textColor,'./LiberationMono-Bold.ttf',$tree[$index]);
 	} else {
-		imageline($img,$parentX,$parentY,$x,$parentY + $drop,$line_colour);
-		imagefilledellipse($img,$x, $parentY + $drop, 30, 30,$clear_colour);
-		imageellipse($img,$x, $parentY + $drop, 30, 30,$line_colour);
+		imageline($img,$parentX,$parentY,$x,$parentY + $drop,$lineColor);
+		imagefilledellipse($img,$x, $parentY + $drop, 30, 30,$clearColor);
+		imageellipse($img,$x, $parentY + $drop, 30, 30,$lineColor);
 		if ($tree[$index] != -2)  //only print if its a valid symbol
-			imagefttext($img,$fontSize,0, $x-6, $parentY+$drop+6,$line_colour,'./LiberationMono-Bold.ttf',$tree[$index]);
+			imagefttext($img,$fontSize,0, $x-6, $parentY+$drop+6,$textColor,'./LiberationMono-Bold.ttf',$tree[$index]);
 	}
 
 
@@ -136,21 +136,52 @@ function drawNode($img,$tree,$index,$parentX,$parentY,$layer,$spread,$drop,$line
 
 
 
-imagesetthickness($img,10);
 $tree = buildTree();
 $my_img = imagecreate(1300,375);
-$background = imagecolorallocate( $my_img, 255, 255, 255 );
-$text_colour = imagecolorallocate( $my_img, 255, 255, 0 );
-$line_colour = imagecolorallocate( $my_img, 0, 0, 0 );
+//Attempt to parse colors from string
 
-drawTree($my_img,$tree,650,50,300,50,$line_colour);
+$colorRegex = '/([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/';
 
+if(isset($_GET['bg'])) {
+	$bgHex = $_GET['bg'];
+	if(preg_match($colorRegex,$bgHex)) 
+		$bgColor = imagecolorallocate( $my_img, hexdec(substr($bgHex,0,2)),hexdec(substr($bgHex,2,2)),hexdec(substr($bgHex,4,2) ));
+	else
+		$bgColor = imagecolorallocate( $my_img, 255, 255, 255 );
+} else 
+$bgColor = imagecolorallocate( $my_img, 255, 255, 255 );
+
+
+if(isset($_GET['line'])) {
+	$lineHex = $_GET['line'];
+	if(preg_match($colorRegex,$lineHex)) 
+		$lineColor = imagecolorallocate( $my_img, hexdec(substr($lineHex,0,2)),hexdec(substr($lineHex,2,2)),hexdec(substr($lineHex,4,2) ));
+	else
+		$lineColor = imagecolorallocate( $my_img, 0, 0, 0 );
+} else 
+$lineColor = imagecolorallocate( $my_img, 0, 0, 0 );
+
+if(isset($_GET['text'])) {
+	$textHex = $_GET['text'];
+	if(preg_match($colorRegex,$textHex)) 
+		$textColor = imagecolorallocate( $my_img, hexdec(substr($textHex,0,2)),hexdec(substr($textHex,2,2)),hexdec(substr($textHex,4,2) ));
+	else
+		$textColor = imagecolorallocate( $my_img, 0, 0, 0 );
+} else 
+$textColor = imagecolorallocate( $my_img, 0, 0, 0 );
+
+$transparency = imagecolorallocate( $my_img, 255, 255, 255 );
+imagefilledrectangle($my_img,0,0,1300,375,$transparency);
+
+drawTree($my_img,$tree,650,50,300,50,$lineColor,$bgColor,$textColor);
+
+imagecolortransparent($my_img,$transparency);
 
 header( "Content-type: image/png" );
 imagepng( $my_img );
-imagecolordeallocate( $line_color );
-imagecolordeallocate( $text_color );
-imagecolordeallocate( $background );
+imagecolordeallocate($my_img, $lineColor);
+imagecolordeallocate($my_img, $textColor);
+imagecolordeallocate($my_img, $bgColor );
 imagedestroy( $my_img );
 
 ?> 
